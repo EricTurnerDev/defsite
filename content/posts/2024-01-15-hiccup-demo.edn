@@ -1,0 +1,39 @@
+{:title      "Writing Posts in Hiccup"
+ :date       "2024-01-15"
+ :categories ["clojure" "meta"]
+ :summary    "How to write blog posts using Hiccup syntax directly in EDN files, and why you might want to."
+
+ :content
+ [:article
+
+  [:p "Instead of Markdown, you can write posts directly in "
+   [:strong "Hiccup"] " — Clojure's HTML DSL expressed as plain data."]
+
+  [:p "Because Hiccup vectors are valid EDN, post files are pure data. "
+   "The generator loads them with " [:code "clojure.edn/read-string"] ", "
+   "so no code is ever evaluated. It is safe, simple, and composable."]
+
+  [:h2 "A quick example"]
+
+  [:p "Here is a Clojure snippet you might embed in a post:"]
+
+  [:pre
+   [:code
+    "(defn square [x]\n  (* x x))\n\n(square 7) ;; => 49"]]
+
+  [:h2 "Why bother?"]
+
+  [:ul
+   [:li [:strong "Full HTML control"] " — use any element or attribute directly."]
+   [:li [:strong "No parsing ambiguity"] " — it is data all the way down."]
+   [:li [:strong "Composable"] " — share fragments across posts as EDN values (future work)."]]
+
+  [:h2 "When to prefer Markdown"]
+
+  [:p "Markdown wins for prose-heavy posts where you want clean source text "
+   "that is easy to read without rendering. Use Hiccup when you need "
+   "precise layout, custom elements, or structured content that Markdown "
+   "would mangle."]
+
+  [:p "Both formats produce the same internal post map; the site generator "
+   "treats them identically from that point on."]]}

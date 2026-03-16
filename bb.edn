@@ -1,0 +1,15 @@
+{:deps
+   {org.babashka/http-server {:mvn/version "0.1.11"}}
+
+ :tasks
+   {build {:doc "Build the artifacts in public/"
+           :task (shell {:inherit true} "clj -M:build")}
+
+    clean {:doc "Clean build artifacts from public/"
+           :task (shell {:inherit true} "bash" "-c" "rm -rf public/*")}
+
+    serve {:doc "Serve static site"
+           :requires ([babashka.http-server :as server])
+           :task (let [port (or (some-> *command-line-args* first parse-long) 3000)]
+                   (server/serve {:port port :dir "public"})
+                   (deref (promise)))}}}

@@ -1,0 +1,6 @@
+{:site/title       "My Defsite Blog"
+ :site/base-url    "https://example.com"
+ :site/description "A blog about anything the blogger wants to blog about."
+ :author/name      "Your Name"
+ :author/bio       "Something interesting about you."
+ :author/photo     "/images/author.svg"}
