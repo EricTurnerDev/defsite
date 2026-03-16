@@ -24,6 +24,34 @@
   --radius:        6px;
 }
 
+/* ---- Dark mode -------------------------------------------- */
+[data-theme="dark"] {
+  --color-text:       #f1f5f9;
+  --color-muted:      #94a3b8;
+  --color-link:       #60a5fa;
+  --color-link-hover: #93c5fd;
+  --color-border:     #334155;
+  --color-bg:         #0f172a;
+  --color-bg-alt:     #1e293b;
+  --color-tag-bg:     #1e3a5f;
+  --color-tag-text:   #93c5fd;
+}
+
+/* System preference fallback (no JS or no stored preference) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --color-text:       #f1f5f9;
+    --color-muted:      #94a3b8;
+    --color-link:       #60a5fa;
+    --color-link-hover: #93c5fd;
+    --color-border:     #334155;
+    --color-bg:         #0f172a;
+    --color-bg-alt:     #1e293b;
+    --color-tag-bg:     #1e3a5f;
+    --color-tag-text:   #93c5fd;
+  }
+}
+
 /* ---- Reset ------------------------------------------------ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -346,6 +374,25 @@ img { max-width: 100%; display: block; }
   color:       var(--color-muted);
   font-size:   0.875rem;
   margin-top:  3rem;
+}
+
+/* ---- Theme toggle ---------------------------------------- */
+#theme-toggle {
+  margin-left:   auto;
+  padding:       0.3rem 0.75rem;
+  border:        1px solid var(--color-border);
+  border-radius: var(--radius);
+  background:    var(--color-bg);
+  color:         var(--color-muted);
+  cursor:        pointer;
+  font-size:     0.83rem;
+  font-family:   var(--font-sans);
+  transition:    border-color 0.15s, color 0.15s;
+  white-space:   nowrap;
+}
+#theme-toggle:hover {
+  border-color: var(--color-link);
+  color:        var(--color-link);
 }
 
 /* ---- Utility --------------------------------------------- */

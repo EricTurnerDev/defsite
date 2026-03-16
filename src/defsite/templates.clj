@@ -27,14 +27,30 @@
 ;; hiccup 1.x escapes all string children. Instead, we concatenate strings
 ;; so that pre-rendered HTML (e.g. from markdown-clj) is injected verbatim.
 
+(def ^:private theme-init-script
+  ;; Runs synchronously before first paint to prevent flash of wrong theme.
+  ;; Reads localStorage; falls back to system preference.
+  (str "<script>"
+       "(function(){"
+       "var t=null;"
+       "try{t=localStorage.getItem('theme');}catch(e){}"
+       "if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}"
+       "document.documentElement.setAttribute('data-theme',t);"
+       "})();"
+       "</script>"))
+
 (defn- head-html [config title description]
-  (h/html
-    [:head
-     [:meta {:charset "utf-8"}]
-     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-     [:title (str title " — " (:site/title config))]
-     (when description [:meta {:name "description" :content description}])
-     [:link {:rel "stylesheet" :href "/css/style.css"}]]))
+  ;; Inject theme-init before </head> so it runs synchronously, preventing
+  ;; flash of wrong theme. hiccup 1.x escapes raw strings, so we use
+  ;; str/replace on the rendered HTML to splice the script tag in.
+  (-> (h/html
+        [:head
+         [:meta {:charset "utf-8"}]
+         [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+         [:title (str title " — " (:site/title config))]
+         (when description [:meta {:name "description" :content description}])
+         [:link {:rel "stylesheet" :href "/css/style.css"}]])
+      (str/replace "</head>" (str theme-init-script "</head>"))))
 
 (defn- site-header-html [config]
   (h/html
@@ -43,7 +59,9 @@
       [:a.site-title {:href "/"} (:site/title config)]
       [:ul.nav-links
        [:li [:a {:href "/"} "Posts"]]
-       [:li [:a {:href "/categories/"} "Categories"]]]]]))
+       [:li [:a {:href "/categories/"} "Categories"]]]
+      [:button#theme-toggle {:type "button" :aria-label "Toggle theme"}
+       "Dark mode"]]]))
 
 (defn- sidebar-html [config]
   (h/html
@@ -90,6 +108,7 @@
        (footer-html config)
        (h/html [:script {:src "/js/search.js" :defer true}])
        (h/html [:script {:src "/js/filter.js" :defer true}])
+       (h/html [:script {:src "/js/theme.js"  :defer true}])
        "</body></html>"))
 
 ;; ---------------------------------------------------------------------------
