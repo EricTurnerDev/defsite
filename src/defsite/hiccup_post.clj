@@ -44,6 +44,7 @@
      :date       date
      :categories categories
      :summary    (str (:summary post))
+     :published  (true? (:published post))
      :slug       slug
      :url        (str "/posts/" slug "/")
      :body-html  body-html

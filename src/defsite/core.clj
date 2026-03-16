@@ -22,7 +22,8 @@
 
 (defn- load-posts [content-dir]
   (->> (fs/discover-posts content-dir)
-       (mapv parse-post)))
+       (mapv parse-post)
+       (filterv :published)))
 
 ;; ---------------------------------------------------------------------------
 ;; Category aggregation

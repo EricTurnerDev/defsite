@@ -1,5 +1,6 @@
 ---
 title: "Functional Patterns in Clojure"
+published: true
 date: 2024-02-01
 categories: [clojure, patterns]
 summary: "A tour of the functional patterns that make Clojure code readable, composable, and easy to test."

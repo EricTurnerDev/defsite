@@ -35,6 +35,8 @@
     (cond
       (str/starts-with? v "[") (parse-inline-seq v)
       (re-matches #"[\"'].*[\"']" v) (subs v 1 (dec (count v)))
+      (= v "true")  true
+      (= v "false") false
       :else v)))
 
 (defn- parse-frontmatter
@@ -104,6 +106,7 @@
      :date       date
      :categories categories
      :summary    (str (:summary fm))
+     :published  (true? (:published fm))
      :slug       slug
      :url        (str "/posts/" slug "/")
      :body-html  (md/md-to-html-string body)

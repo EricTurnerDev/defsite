@@ -1,5 +1,6 @@
 ---
 title: "Hello, World"
+published: true
 date: 2024-01-01
 categories: [meta]
 summary: "An introduction to this blog and what I plan to write about."
