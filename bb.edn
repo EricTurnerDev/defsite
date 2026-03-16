@@ -12,4 +12,58 @@
            :requires ([babashka.http-server :as server])
            :task (let [port (or (some-> *command-line-args* first parse-long) 3000)]
                    (server/serve {:port port :dir "public"})
-                   (deref (promise)))}}}
+                   (deref (promise)))}
+
+    watch {:doc "Watch for changes, rebuild, and live-reload the browser"
+           :requires ([babashka.http-server :as server]
+                      [babashka.process     :as process])
+           :task
+           (let [port       (or (some-> *command-line-args* first parse-long) 3000)
+                 public-dir "public"
+                 watch-dirs ["src" "content" "resources" "config.edn"]
+                 version    (atom 0)
+
+                 write-lr!  (fn []
+                              (spit (str public-dir "/livereload.json")
+                                    (str "{\"v\":" (deref version) "}")))
+
+                 rebuild!   (fn []
+                              (println "\nChange detected — rebuilding...")
+                              (try
+                                (let [res (process/shell
+                                            {:inherit true :continue true}
+                                            "clj" "-M:build")]
+                                  (if (zero? (:exit res))
+                                    (do (swap! version inc)
+                                        (write-lr!)
+                                        (println "Done."))
+                                    (println "Build failed — waiting for next change.")))
+                                (catch Exception e
+                                  (println "Build error:" (.getMessage e)))))
+
+                 ;; Snapshot maps {path -> last-modified} for all watched files.
+                 ;; Uses java.io.File directly — no babashka.fs dependency needed.
+                 snapshot   (fn []
+                              (into {}
+                                    (for [entry watch-dirs
+                                          :let  [f (java.io.File. entry)]
+                                          :when (.exists f)
+                                          file  (if (.isDirectory f) (file-seq f) [f])
+                                          :when (.isFile file)]
+                                      [(.getPath file) (.lastModified file)])))]
+
+             (rebuild!)
+             (server/serve {:port port :dir public-dir})
+             (println (str "\nWatching for changes. Serving on http://localhost:" port))
+
+             ;; Poll every 300 ms; rebuild when snapshot changes.
+             ;; After a rebuild, take a fresh snapshot so the next comparison
+             ;; is against the post-build state, not the stale pre-build one.
+             (loop [snap (snapshot)]
+               (Thread/sleep 300)
+               (let [new-snap (snapshot)]
+                 (if (not= snap new-snap)
+                   (do (rebuild!)
+                       (recur (snapshot)))
+                   (recur new-snap)))))}}}
+

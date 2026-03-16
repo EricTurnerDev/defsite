@@ -93,6 +93,30 @@
 ;; This is the only safe way in hiccup 1.x to embed pre-rendered HTML —
 ;; rather than fighting the macro's escaping, we concatenate strings.
 
+;; Polls /livereload.json and reloads when the version changes.
+;; Makes one request on load; if the file is absent (production) it stops
+;; immediately and silently — no repeated requests, no console errors.
+(def ^:private livereload-script
+  (str "<script>"
+       "(function(){"
+       "var v=null;"
+       "function poll(){"
+       "fetch('/livereload.json?_='+Date.now())"
+       ".then(function(r){return r.ok?r.json():Promise.reject();})"
+       ".then(function(d){"
+       "if(v===null){v=d.v;}"
+       "else if(d.v!==v){location.reload();return;}"
+       "setTimeout(poll,500);"
+       "})"
+       ".catch(function(){"
+       ;; Never seen the file → production, stop polling.
+       ;; Seen it before → watch mode, file is briefly absent during rebuild, retry.
+       "if(v!==null){setTimeout(poll,500);}"
+       "});}"
+       "poll();"
+       "})();"
+       "</script>"))
+
 (defn- page-html [config title description main-html]
   (str "<!DOCTYPE html>\n"
        "<html lang=\"en\">"
@@ -109,6 +133,7 @@
        (h/html [:script {:src "/js/search.js" :defer true}])
        (h/html [:script {:src "/js/filter.js" :defer true}])
        (h/html [:script {:src "/js/theme.js"  :defer true}])
+       livereload-script
        "</body></html>"))
 
 ;; ---------------------------------------------------------------------------
