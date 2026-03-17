@@ -75,21 +75,26 @@
 ;; Public entry point
 
 (def ^:private defaults
-  {:config-path   "config.edn"
-   :content-dir   "content"
-   :resources-dir "resources"
-   :output-dir    "public"})
+  {:ssg-config-path   "config.edn"
+   :config-path       nil
+   :ssg-resources-dir "resources"
+   :content-dir       "content"
+   :resources-dir     "resources"
+   :output-dir        "public"})
 
 (defn build
   "Run the full site build pipeline.
-   opts may override any of the default paths in `defaults`."
+   opts may override any of the default paths in `defaults`.
+   ssg-config-path / ssg-resources-dir are the SSG's own files, used as
+   fallbacks when the site directory does not supply its own."
   ([]    (build {}))
   ([opts]
-   (let [{:keys [config-path content-dir resources-dir output-dir]}
+   (let [{:keys [ssg-config-path config-path ssg-resources-dir
+                 content-dir resources-dir output-dir]}
          (merge defaults opts)]
 
      (println "Loading config…")
-     (let [cfg (config/load-config config-path)]
+     (let [cfg (config/load-config ssg-config-path config-path)]
        (println (str "  Building '" (:site/title cfg) "'"))
 
        (println "Parsing posts…")
@@ -103,6 +108,9 @@
          (prepare-output! output-dir)
 
          (println "Copying static resources…")
+         ;; Copy SSG defaults first, then overlay site-specific files so that
+         ;; any resource present in the site directory takes precedence.
+         (fs/copy-resources ssg-resources-dir output-dir)
          (fs/copy-resources resources-dir output-dir)
 
          (println "Rendering pages…")
@@ -117,9 +125,15 @@
                        (count posts) " post(s) written to "
                        output-dir "/")))))))
 
-(defn -main [& _args]
+(defn -main [& [site-dir]]
+  ;; ssg-config-path and ssg-resources-dir are not passed here; they come from
+  ;; `defaults` ("config.edn" / "resources" relative to CWD, i.e. the SSG dir).
   (try
-    (build)
+    (let [d (or site-dir ".")]
+      (build {:config-path   (str d "/config.edn")
+              :content-dir   (str d "/content")
+              :resources-dir (str d "/resources")
+              :output-dir    (str d "/public")}))
     (catch clojure.lang.ExceptionInfo e
       (println "\nError:" (ex-message e))
       (when-let [data (ex-data e)]

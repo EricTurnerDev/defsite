@@ -2,26 +2,47 @@
    {org.babashka/http-server {:mvn/version "0.1.11"}}
 
  :tasks
-   {build {:doc "Build the artifacts in public/"
-           :task (shell {:inherit true} "clj -M:build")}
+   {build {:doc "Build the site. Optional arg: site directory (default: .)"
+           :task (let [args     *command-line-args*
+                       site-dir (if (and (first args) (not (parse-long (first args))))
+                                  (first args) ".")]
+                   (shell {:inherit true} "clj" "-M:build" site-dir))}
 
-    clean {:doc "Clean build artifacts from public/"
-           :task (shell {:inherit true} "bash" "-c" "rm -rf public/*")}
+    clean {:doc "Clean build artifacts. Optional arg: site directory (default: .)"
+           :task (let [args     *command-line-args*
+                       site-dir (if (and (first args) (not (parse-long (first args))))
+                                  (first args) ".")]
+                   (shell {:inherit true} "bash" "-c" (str "rm -rf " site-dir "/public/*")))}
 
-    serve {:doc "Serve static site"
+    serve {:doc "Serve static site. Args: [site-dir] [port]"
            :requires ([babashka.http-server :as server])
-           :task (let [port (or (some-> *command-line-args* first parse-long) 3000)]
-                   (server/serve {:port port :dir "public"})
+           :task (let [args                 *command-line-args*
+                       [site-dir port-arg]  (if (and (first args) (not (parse-long (first args))))
+                                              [(first args) (second args)]
+                                              ["." (first args)])
+                       port                 (or (some-> port-arg parse-long) 3000)]
+                   (server/serve {:port port :dir (str site-dir "/public")})
                    (deref (promise)))}
 
-    watch {:doc "Watch for changes, rebuild, and live-reload the browser"
+    watch {:doc "Watch for changes, rebuild, and live-reload the browser. Args: [site-dir] [port]"
            :requires ([babashka.http-server :as server]
                       [babashka.process     :as process])
            :task
-           (let [port       (or (some-> *command-line-args* first parse-long) 3000)
-                 public-dir "public"
-                 watch-dirs ["src" "content" "resources" "config.edn"]
-                 version    (atom 0)
+           (let [args                *command-line-args*
+                 [site-dir port-arg] (if (and (first args) (not (parse-long (first args))))
+                                       [(first args) (second args)]
+                                       ["." (first args)])
+                 port                (or (some-> port-arg parse-long) 3000)
+                 public-dir          (str site-dir "/public")
+                 ;; Always watch the SSG's own source, resources, and config
+                 ;; (used as fallbacks), plus the site directory's files.
+                 watch-dirs          ["src"
+                                      "resources"
+                                      "config.edn"
+                                      (str site-dir "/content")
+                                      (str site-dir "/resources")
+                                      (str site-dir "/config.edn")]
+                 version             (atom 0)
 
                  write-lr!  (fn []
                               (spit (str public-dir "/livereload.json")
@@ -32,7 +53,7 @@
                               (try
                                 (let [res (process/shell
                                             {:inherit true :continue true}
-                                            "clj" "-M:build")]
+                                            "clj" "-M:build" site-dir)]
                                   (if (zero? (:exit res))
                                     (do (swap! version inc)
                                         (write-lr!)
@@ -66,4 +87,3 @@
                    (do (rebuild!)
                        (recur (snapshot)))
                    (recur new-snap)))))}}}
-

@@ -4,107 +4,46 @@ A static site generator for a personal blog, written in Clojure.
 
 - Posts in Markdown or Hiccup (EDN)
 - Author photo and bio
-- Category pages (static) + client-side category filtering
-- Client-side full-text search (no backend)
-- Pure static output: HTML, CSS, JS, images
+- Category pages + client-side category filtering
+- Client-side full-text search
 
 ## Requirements
 
-- [Clojure CLI](https://clojure.org/guides/install_clojure) (`clj`)
-- Java 11+
-- Babashka
+### Java 11+
 
-## Usage
+Clojure runs on the JVM. Install a JDK if you don't have one:
 
-### Build the site
+- **macOS:** `brew install openjdk`
+- **Debian/Ubuntu:** `sudo apt install default-jdk`
+- **Windows:** download from [adoptium.net](https://adoptium.net)
+
+Verify: `java -version`
+
+### Clojure CLI
+
+- **macOS:** `brew install clojure/tools/clojure`
+- **Linux:** follow the [official install script](https://clojure.org/guides/install_clojure)
+- **Windows:** use the [Windows installer](https://clojure.org/guides/install_clojure#_windows)
+
+Verify: `clj --version`
+
+### Babashka
+
+- **macOS:** `brew install borkdude/brew/babashka`
+- **Linux:** `bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)`
+- **Windows:** `scoop install babashka` (via [Scoop](https://scoop.sh))
+
+Verify: `bb --version`
+
+## Quick start
+
+Create a site directory with a config file and a place for posts:
 
 ```bash
-bb build
+mkdir -p my-site/content/posts
 ```
 
-Output is written to `public/`. Run again after any change to content, templates, or config.
-
-### Serve locally
-
-```bash
-bb serve
-```
-
-Then open [http://localhost:3000](http://localhost:3000).
-
-## Project structure
-
-```
-defsite/
-├── config.edn              # Site title, base URL, author name/bio/photo
-├── deps.edn                # Dependencies and :build alias
-├── bb.edn                  # Tasks (e.g. build, serve, clean)
-├── content/
-│   └── posts/              # Blog posts (.md or .edn)
-├── resources/
-│   ├── css/style.css
-│   ├── js/
-│   │   ├── search.js       # Client-side search
-│   │   └── filter.js       # Client-side category filter
-│   └── images/
-│       └── author.svg      # Replace with your photo
-├── src/defsite/
-│   ├── core.clj            # Build pipeline entry point
-│   ├── config.clj          # Config loading and validation
-│   ├── markdown.clj        # Markdown + frontmatter parsing
-│   ├── hiccup_post.clj     # EDN/Hiccup post loading
-│   ├── templates.clj       # HTML page templates
-│   ├── search.clj          # Search index generation
-│   └── fs.clj              # File system helpers
-└── public/                 # Generated output (git-ignored)
-```
-
-## Writing posts
-
-### Markdown (`.md`)
-
-Place files in `content/posts/`. The filename should be prefixed with a date:
-
-```
-content/posts/2024-03-01-my-post.md
-```
-
-Required frontmatter fields:
-
-```yaml
----
-title: "My Post Title"
-date: 2024-03-01
-categories: [clojure, patterns]
-summary: "One sentence shown on the index page and in search results."
----
-
-Post body in Markdown...
-```
-
-The `slug` field is optional. If omitted, it is derived from the filename by stripping the date prefix.
-
-### Hiccup / EDN (`.edn`)
-
-Posts can also be written as EDN maps with a `:content` key containing a Hiccup vector. The file is loaded with `clojure.edn/read-string` — no code is evaluated.
-
-```clojure
-{:title      "My Post Title"
- :date       "2024-03-01"
- :categories ["clojure"]
- :summary    "One sentence description."
-
- :content
- [:article
-  [:p "Write directly in " [:strong "Hiccup"] "."]
-  [:pre [:code "(+ 1 2) ;; => 3"]]]}
-```
-
-Use Markdown for prose-heavy posts. Use Hiccup when you need precise HTML control or structured content.
-
-## Configuration
-
-Edit `config.edn` to set site-wide values:
+Add `my-site/config.edn`:
 
 ```clojure
 {:site/title       "My Blog"
@@ -115,35 +54,103 @@ Edit `config.edn` to set site-wide values:
  :author/photo     "/images/author.svg"}
 ```
 
-Replace `resources/images/author.svg` with your own photo (any format supported by `<img>`). Update `:author/photo` to match.
+Build and serve:
 
-## How it works
+```bash
+bb watch my-site
+```
 
-The build pipeline runs once and produces a fully static `public/` directory:
+Then open [http://localhost:3000](http://localhost:3000). The site rebuilds and the browser reloads automatically whenever you change a file.
 
-1. Load and validate `config.edn`
-2. Parse all posts in `content/posts/` (`.md` and `.edn`)
-3. Render `public/index.html` — all posts, sorted by date
-4. Render `public/posts/{slug}/index.html` for each post
-5. Render `public/categories/index.html` and one page per category
-6. Write `public/search-index.json` — title, summary, and plain-text body of every post
-7. Copy everything in `resources/` to `public/` verbatim
+## Commands
 
-### Search
+All commands take the site directory as the first argument. The port is optional (default: `3000`).
 
-`search.js` fetches `search-index.json` on the first keypress and scores posts by how often the query appears in the title (weight 10), categories (3), summary (5), and body (1). No external library is required.
+| Command | Description |
+|---|---|
+| `bb build my-site` | Build the site into `my-site/public/` |
+| `bb serve my-site` | Serve `my-site/public/` at port 3000 |
+| `bb watch my-site` | Build, serve, and rebuild on any file change |
+| `bb clean my-site` | Delete everything in `my-site/public/` |
 
-### Category filtering
+To use a different port:
 
-The index page includes filter buttons generated at build time. `filter.js` reads the `data-categories` attribute on each post card and toggles a `.hidden` class. Each category also has its own static page at `/categories/{slug}/`, which works without JavaScript.
+```bash
+bb watch my-site 8080
+```
 
-## Dependencies
+## Site directory structure
 
-| Library | Version | Purpose |
-|---|---|---|
-| [hiccup](https://github.com/weavejester/hiccup) | 1.0.5 | HTML templating |
-| [markdown-clj](https://github.com/yogthos/markdown-clj) | 1.11.4 | Markdown → HTML |
-| [babashka/fs](https://github.com/babashka/fs) | 0.5.20 | File system utilities |
-| [data.json](https://github.com/clojure/data.json) | 2.4.0 | Search index serialization |
+```
+my-site/
+├── config.edn          # Site title, base URL, author name/bio/photo
+├── content/
+│   └── posts/          # Blog posts (.md or .edn)
+└── resources/
+    └── images/
+        └── author.jpg  # Optional: author photo
+```
 
-No database, no server, no runtime dependencies in the output.
+`my-site/public/` is generated by `bb build` and can be git-ignored.
+
+## Configuration
+
+`config.edn` sets site-wide values:
+
+```clojure
+{:site/title       "My Blog"
+ :site/base-url    "https://example.com"
+ :site/description "A short description used in meta tags."
+ :author/name      "Your Name"
+ :author/bio       "A sentence or two about you."
+ :author/photo     "/images/author.jpg"}
+```
+
+To use an author photo, place it in `my-site/resources/images/` and set `:author/photo` to the matching path.
+
+## Writing posts
+
+### Markdown (`.md`)
+
+Create a file in `my-site/content/posts/` with a date prefix:
+
+```
+my-site/content/posts/2024-03-01-my-post.md
+```
+
+Required frontmatter:
+
+```yaml
+---
+title: "My Post Title"
+published: true
+date: 2024-03-01
+categories: [clojure, patterns]
+summary: "One sentence shown on the index page and in search results."
+---
+
+Post body in Markdown...
+```
+
+Posts without `published: true` are ignored by the build.
+
+The `slug` field is optional. If omitted it is derived from the filename by stripping the date prefix.
+
+### Hiccup / EDN (`.edn`)
+
+For posts that need precise HTML control, write an EDN map with a `:content` key containing a Hiccup vector:
+
+```clojure
+{:title      "My Post Title"
+ :published  true
+ :date       "2024-03-01"
+ :categories ["clojure"]
+ :summary    "One sentence description."
+
+ :content
+ [:article
+  [:p "Write directly in " [:strong "Hiccup"] "."]
+  [:pre [:code "(+ 1 2) ;; => 3"]]]}
+```
+
+Use Markdown for prose-heavy posts. Use Hiccup when you need precise HTML structure.

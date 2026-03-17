@@ -19,10 +19,24 @@
                       {:path path :missing-key k}))))
   config)
 
+(defn- read-edn [path]
+  (-> path io/file slurp edn/read-string))
+
 (defn load-config
-  "Read config.edn from path, validate required keys, and return the map."
-  [path]
-  (let [f (io/file path)]
-    (when-not (.exists f)
-      (throw (ex-info (str "Config file not found: " path) {:path path})))
-    (-> f slurp edn/read-string (validate! path))))
+  "Read config from base-path, optionally merge in override-path (site-specific
+   config — only keys present in the override are replaced), validate that all
+   required keys are present in the merged result, and return the map."
+  ([base-path]
+   (load-config base-path nil))
+  ([base-path override-path]
+   (let [f (io/file base-path)]
+     (when-not (.exists f)
+       (throw (ex-info (str "Config file not found: " base-path) {:path base-path})))
+     (let [base     (read-edn base-path)
+           override (when override-path
+                      (let [of (io/file override-path)]
+                        (when (.exists of)
+                          (read-edn override-path))))
+           merged   (merge base (or override {}))]
+       (validate! merged base-path)
+       merged))))
