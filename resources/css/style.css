@@ -241,6 +241,33 @@ img { max-width: 100%; display: block; }
 
 .post-card-summary { color: var(--color-muted); font-size: 0.95rem; }
 
+/* ---- Draft badge ----------------------------------------- */
+.draft-badge {
+  display:        inline-block;
+  padding:        0.1rem 0.45rem;
+  background:     #fef3c7;
+  color:          #92400e;
+  border-radius:  4px;
+  font-size:      0.72rem;
+  font-weight:    600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+  margin-left:    0.4rem;
+}
+
+[data-theme="dark"] .draft-badge {
+  background: #3d2600;
+  color:      #fcd34d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .draft-badge {
+    background: #3d2600;
+    color:      #fcd34d;
+  }
+}
+
 /* ---- Category tags --------------------------------------- */
 .category-tag {
   display:       inline-block;

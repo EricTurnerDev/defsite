@@ -79,6 +79,17 @@ To use a different port:
 bb watch my-site 8080
 ```
 
+### --show-unpublished
+
+Pass `--show-unpublished` to include posts that do not have `published: true` in their frontmatter. This is useful when drafting a post so you can preview it before publishing.
+
+```bash
+bb watch --show-unpublished my-site
+bb build --show-unpublished my-site
+```
+
+Unpublished posts are treated identically to published ones — they appear on the index, get their own post page, show up in category pages, and are included in the search index.
+
 ## Site directory structure
 
 ```

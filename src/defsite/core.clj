@@ -20,10 +20,10 @@
       (str/ends-with? name ".edn") (hiccup-post/parse-post file)
       :else (throw (ex-info (str "Unknown post format: " name) {:file file})))))
 
-(defn- load-posts [content-dir]
+(defn- load-posts [content-dir show-unpublished?]
   (->> (fs/discover-posts content-dir)
        (mapv parse-post)
-       (filterv :published)))
+       (filterv #(or show-unpublished? (:published %)))))
 
 ;; ---------------------------------------------------------------------------
 ;; Category aggregation
@@ -80,7 +80,8 @@
    :ssg-resources-dir "resources"
    :content-dir       "content"
    :resources-dir     "resources"
-   :output-dir        "public"})
+   :output-dir        "public"
+   :show-unpublished  false})
 
 (defn build
   "Run the full site build pipeline.
@@ -90,7 +91,7 @@
   ([]    (build {}))
   ([opts]
    (let [{:keys [ssg-config-path config-path ssg-resources-dir
-                 content-dir resources-dir output-dir]}
+                 content-dir resources-dir output-dir show-unpublished]}
          (merge defaults opts)]
 
      (println "Loading config…")
@@ -98,7 +99,7 @@
        (println (str "  Building '" (:site/title cfg) "'"))
 
        (println "Parsing posts…")
-       (let [posts    (load-posts content-dir)
+       (let [posts    (load-posts content-dir show-unpublished)
              cats-map (build-categories-map posts)
              all-cats (set (keys cats-map))]
          (println (str "  " (count posts)    " post(s) across "
@@ -125,15 +126,18 @@
                        (count posts) " post(s) written to "
                        output-dir "/")))))))
 
-(defn -main [& [site-dir]]
+(defn -main [& args]
   ;; ssg-config-path and ssg-resources-dir are not passed here; they come from
   ;; `defaults` ("config.edn" / "resources" relative to CWD, i.e. the SSG dir).
   (try
-    (let [d (or site-dir ".")]
-      (build {:config-path   (str d "/config.edn")
-              :content-dir   (str d "/content")
-              :resources-dir (str d "/resources")
-              :output-dir    (str d "/public")}))
+    (let [show-unpublished? (boolean (some #{"--show-unpublished"} args))
+          pos-args          (remove  #{"--show-unpublished"} args)
+          d                 (or (first pos-args) ".")]
+      (build {:config-path      (str d "/config.edn")
+              :content-dir      (str d "/content")
+              :resources-dir    (str d "/resources")
+              :output-dir       (str d "/public")
+              :show-unpublished show-unpublished?}))
     (catch clojure.lang.ExceptionInfo e
       (println "\nError:" (ex-message e))
       (when-let [data (ex-data e)]

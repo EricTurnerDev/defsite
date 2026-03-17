@@ -2,11 +2,14 @@
    {org.babashka/http-server {:mvn/version "0.1.11"}}
 
  :tasks
-   {build {:doc "Build the site. Optional arg: site directory (default: .)"
+   {build {:doc "Build the site. Args: [--show-unpublished] [site-dir]"
            :task (let [args     *command-line-args*
-                       site-dir (if (and (first args) (not (parse-long (first args))))
-                                  (first args) ".")]
-                   (shell {:inherit true} "clj" "-M:build" site-dir))}
+                       show-unp (some #{"--show-unpublished"} args)
+                       pos-args (remove #{"--show-unpublished"} args)
+                       site-dir (if (and (first pos-args) (not (parse-long (first pos-args))))
+                                  (first pos-args) ".")]
+                   (apply shell {:inherit true} "clj" "-M:build"
+                          (cond-> [site-dir] show-unp (conj "--show-unpublished"))))}
 
     clean {:doc "Clean build artifacts. Optional arg: site directory (default: .)"
            :task (let [args     *command-line-args*
@@ -24,14 +27,16 @@
                    (server/serve {:port port :dir (str site-dir "/public")})
                    (deref (promise)))}
 
-    watch {:doc "Watch for changes, rebuild, and live-reload the browser. Args: [site-dir] [port]"
+    watch {:doc "Watch for changes, rebuild, and live-reload the browser. Args: [--show-unpublished] [site-dir] [port]"
            :requires ([babashka.http-server :as server]
                       [babashka.process     :as process])
            :task
            (let [args                *command-line-args*
-                 [site-dir port-arg] (if (and (first args) (not (parse-long (first args))))
-                                       [(first args) (second args)]
-                                       ["." (first args)])
+                 show-unp            (some #{"--show-unpublished"} args)
+                 pos-args            (remove #{"--show-unpublished"} args)
+                 [site-dir port-arg] (if (and (first pos-args) (not (parse-long (first pos-args))))
+                                       [(first pos-args) (second pos-args)]
+                                       ["." (first pos-args)])
                  port                (or (some-> port-arg parse-long) 3000)
                  public-dir          (str site-dir "/public")
                  ;; Always watch the SSG's own source, resources, and config
@@ -51,9 +56,10 @@
                  rebuild!   (fn []
                               (println "\nChange detected — rebuilding...")
                               (try
-                                (let [res (process/shell
+                                (let [res (apply process/shell
                                             {:inherit true :continue true}
-                                            "clj" "-M:build" site-dir)]
+                                            "clj" "-M:build"
+                                            (cond-> [site-dir] show-unp (conj "--show-unpublished")))]
                                   (if (zero? (:exit res))
                                     (do (swap! version inc)
                                         (write-lr!)

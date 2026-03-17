@@ -145,7 +145,9 @@
     [:article.post-card
      {:data-categories (str/join "," (map category-slug (:categories post)))}
      [:h2.post-card-title
-      [:a {:href (:url post)} (:title post)]]
+      [:a {:href (:url post)} (:title post)]
+      (when-not (:published post)
+        [:span.draft-badge "Draft"])]
      [:div.post-card-meta
       [:time {:datetime (str (:date post))} (format-date (:date post))]
       [:span.post-card-categories
@@ -189,6 +191,8 @@
                              [:div.post-meta
                               [:time {:datetime (str (:date post))}
                                (format-date (:date post))]
+                              (when-not (:published post)
+                                [:span.draft-badge "Draft"])
                               [:span.post-categories
                                (map category-tag (:categories post))]]]
                             [:div.post-body sentinel]
