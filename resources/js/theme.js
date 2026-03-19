@@ -34,10 +34,8 @@
     var btn = document.getElementById("theme-toggle");
     if (!btn) return;
     if (theme === "dark") {
-      btn.textContent = "Light mode";
       btn.setAttribute("aria-label", "Switch to light mode");
     } else {
-      btn.textContent = "Dark mode";
       btn.setAttribute("aria-label", "Switch to dark mode");
     }
   }

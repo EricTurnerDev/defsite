@@ -405,21 +405,38 @@ img { max-width: 100%; display: block; }
 
 /* ---- Theme toggle ---------------------------------------- */
 #theme-toggle {
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
   margin-left:   auto;
-  padding:       0.3rem 0.75rem;
+  padding:       0.4rem 0.5rem;
   border:        1px solid var(--color-border);
   border-radius: var(--radius);
   background:    var(--color-bg);
   color:         var(--color-muted);
   cursor:        pointer;
-  font-size:     0.83rem;
   font-family:   var(--font-sans);
   transition:    border-color 0.15s, color 0.15s;
-  white-space:   nowrap;
 }
 #theme-toggle:hover {
   border-color: var(--color-link);
   color:        var(--color-link);
+}
+#theme-toggle .theme-icon {
+  display: block;
+  line-height: 0;
+}
+#theme-toggle .theme-icon-sun {
+  display: none;
+}
+#theme-toggle .theme-icon-moon {
+  display: block;
+}
+[data-theme="dark"] #theme-toggle .theme-icon-sun {
+  display: block;
+}
+[data-theme="dark"] #theme-toggle .theme-icon-moon {
+  display: none;
 }
 
 /* ---- Utility --------------------------------------------- */
