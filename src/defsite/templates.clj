@@ -94,7 +94,7 @@
 (defn- footer-html [config]
   (h/html
     [:footer.site-footer
-     [:p "\u00A9 " (.getYear (java.time.LocalDate/now)) " " (:author/name config)]]))
+     [:p "\u00A9 " (.getYear (java.time.LocalDate/now)) " " (:author/name config) "." " " "All Rights Reserved. Published with " [:a {:href "https://github.com/EricTurnerDev/defsite" :target "_blank"} "defsite"] "."]]))
 
 ;; ---------------------------------------------------------------------------
 ;; Page assembly
