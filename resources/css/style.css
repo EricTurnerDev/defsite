@@ -478,3 +478,12 @@ img { max-width: 100%; display: block; }
   .site-header { padding: 0 1rem; }
   .site-body   { padding: 0 1rem; }
 }
+
+@media (max-width: 480px) {
+  .author-card       { flex-wrap: wrap; align-items: center; }
+  .author-photo      { width: 48px; height: 48px; }
+  .author-bio        { flex-basis: 100%; }
+
+  .sidebar-search    { padding: 0.75rem; }
+  .sidebar-search h4 { display: none; }
+}
