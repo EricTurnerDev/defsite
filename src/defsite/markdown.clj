@@ -87,6 +87,20 @@
                       {:file filename :missing k}))))
   fm)
 
+;; ---------------------------------------------------------------------------
+;; Image caption injection
+
+(defn- add-figure-captions
+  "Wrap any <img> tag whose title attribute is non-empty in a
+   <figure>/<figcaption> pair so authors can add captions with the
+   standard Markdown image-title syntax: ![alt](url \"caption\")."
+  [html]
+  (str/replace html
+               #"<img([^>]*?)title=\"([^\"]+)\"([^>]*)/?>"
+               (fn [[_ before title after]]
+                 (str "<figure><img" before "title=\"" title "\"" after
+                      "><figcaption>" title "</figcaption></figure>"))))
+
 (defn parse-post
   "Parse a Markdown post file into the unified post map.
    Frontmatter is a YAML subset; the body is converted to HTML by markdown-clj."
@@ -109,5 +123,5 @@
      :published  (true? (:published fm))
      :slug       slug
      :url        (str "/posts/" slug "/")
-     :body-html  (md/md-to-html-string body)
+     :body-html  (-> body md/md-to-html-string add-figure-captions)
      :source     :markdown}))

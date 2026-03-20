@@ -353,6 +353,17 @@ img { max-width: 100%; display: block; }
   margin: 2rem 0;
 }
 
+.post-body figure {
+  margin: 1.5rem 0;
+}
+
+.post-body figcaption {
+  margin-top: 0.4rem;
+  font-size:  0.85rem;
+  color:      var(--color-muted);
+  font-style: italic;
+}
+
 .post-footer {
   margin-top:  3rem;
   padding-top: 1.5rem;
