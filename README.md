@@ -37,13 +37,13 @@ Verify: `bb --version`
 
 ## Quick start
 
-Create a site directory with a config file and a place for posts:
+Create a site directory somewhere else with a config file and a place for posts:
 
 ```bash
-mkdir -p my-site/content/posts
+mkdir -p ../my-site/content/posts
 ```
 
-Add `my-site/config.edn`:
+Add `../my-site/config.edn`:
 
 ```clojure
 {:site/title       "My Blog"
@@ -57,7 +57,7 @@ Add `my-site/config.edn`:
 Build and serve:
 
 ```bash
-bb watch my-site
+bb watch ../my-site
 ```
 
 Then open [http://localhost:3000](http://localhost:3000). The site rebuilds and the browser reloads automatically whenever you change a file.
@@ -68,15 +68,15 @@ All commands take the site directory as the first argument. The port is optional
 
 | Command | Description |
 |---|---|
-| `bb build my-site` | Build the site into `my-site/public/` |
-| `bb serve my-site` | Serve `my-site/public/` at port 3000 |
-| `bb watch my-site` | Build, serve, and rebuild on any file change |
-| `bb clean my-site` | Delete everything in `my-site/public/` |
+| `bb build ../my-site` | Build the site into `../my-site/public/` |
+| `bb serve ../my-site` | Serve `../my-site/public/` at port 3000 |
+| `bb watch ../my-site` | Build, serve, and rebuild on any file change |
+| `bb clean ../my-site` | Delete everything in `../my-site/public/` |
 
 To use a different port:
 
 ```bash
-bb watch my-site 8080
+bb watch ../my-site 8080
 ```
 
 ### --show-unpublished
@@ -84,8 +84,8 @@ bb watch my-site 8080
 Pass `--show-unpublished` to include posts that do not have `published: true` in their frontmatter. This is useful when drafting a post so you can preview it before publishing.
 
 ```bash
-bb watch --show-unpublished my-site
-bb build --show-unpublished my-site
+bb watch --show-unpublished ../my-site
+bb build --show-unpublished ../my-site
 ```
 
 Unpublished posts are treated identically to published ones — they appear on the index, get their own post page, show up in category pages, and are included in the search index.
