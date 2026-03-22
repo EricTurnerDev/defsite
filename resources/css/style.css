@@ -371,6 +371,32 @@ img { max-width: 100%; display: block; }
   font-size:   0.9rem;
 }
 
+.post-nav {
+  display:         flex;
+  justify-content: space-between;
+  gap:             1rem;
+  margin-bottom:   1.25rem;
+}
+
+.post-nav-prev,
+.post-nav-next {
+  max-width:       45%;
+  text-decoration: none;
+}
+
+.post-nav-next { text-align: right; margin-left: auto; }
+
+.post-nav-prev:hover,
+.post-nav-next:hover {
+  text-decoration:        underline;
+  text-underline-offset:  2px;
+}
+
+.post-back {
+  display: block;
+  margin-top: 0.5rem;
+}
+
 /* ---- Categories index ------------------------------------ */
 .categories-header h1 { font-size: 1.75rem; margin-bottom: 1.5rem; }
 

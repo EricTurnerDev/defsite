@@ -170,7 +170,7 @@
 (defn index-page
   "Main listing page with category filter buttons and post cards."
   [config posts all-categories]
-  (let [sorted (sort-by :date #(compare %2 %1) posts)
+  (let [sorted (sort-by (juxt :date :slug) #(compare %2 %1) posts)
         controls-html (h/html
                         [:div.index-controls
                          [:div.category-filters
@@ -190,7 +190,7 @@
 (defn post-page
   "Individual post page.
    Uses a sentinel string to inject the markdown body without hiccup escaping it."
-  [config post]
+  [config post prev-post next-post]
   ;; Hiccup will not escape a plain alphanumeric sentinel, so we can
   ;; safely substitute the raw markdown HTML after rendering.
   (let [sentinel "__POST_BODY__"
@@ -207,14 +207,23 @@
                                (map category-tag (:categories post))]]]
                             [:div.post-body sentinel]
                             [:footer.post-footer
-                             [:a {:href "/"} "\u2190 Back to all posts"]]])
+                             [:nav.post-nav
+                              (if prev-post
+                                [:a.post-nav-prev {:href (:url prev-post)}
+                                 (str "\u2190 " (:title prev-post))]
+                                [:span.post-nav-placeholder])
+                              (if next-post
+                                [:a.post-nav-next {:href (:url next-post)}
+                                 (str (:title next-post) " \u2192")]
+                                [:span.post-nav-placeholder])]
+                             [:a.post-back {:href "/"} "\u2190 Back to all posts"]]])
                          (str/replace sentinel (:body-html post)))]
     (page-html config (:title post) (:summary post) article-html)))
 
 (defn category-page
   "Post listing for a single category."
   [config category posts]
-  (let [sorted    (sort-by :date #(compare %2 %1) posts)
+  (let [sorted    (sort-by (juxt :date :slug) #(compare %2 %1) posts)
         cards-html (str/join "" (map post-card sorted))
         main-html  (str (h/html
                           [:div.category-header

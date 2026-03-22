@@ -50,10 +50,14 @@
   (bfs/create-dirs output-dir))
 
 (defn- write-post-pages! [cfg posts output-dir]
-  (doseq [post posts]
-    (fs/write-file output-dir
-                   (str "posts/" (:slug post) "/index.html")
-                   (tmpl/post-page cfg post))))
+  (let [sorted (sort-by (juxt :date :slug) posts)
+        n      (count sorted)]
+    (doseq [[i post] (map-indexed vector sorted)]
+      (let [prev-post (when (pos? i)          (nth sorted (dec i)))
+            next-post (when (< i (dec n))     (nth sorted (inc i)))]
+        (fs/write-file output-dir
+                       (str "posts/" (:slug post) "/index.html")
+                       (tmpl/post-page cfg post prev-post next-post))))))
 
 (defn- write-index-page! [cfg posts all-cats output-dir]
   (fs/write-file output-dir "index.html"
