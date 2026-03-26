@@ -6,6 +6,7 @@ A static site generator for a personal blog, written in Clojure.
 - Author photo and bio
 - Category pages + client-side category filtering
 - Client-side full-text search
+- Sitemap generation for search engine indexing.
 
 ## Requirements
 
@@ -116,6 +117,8 @@ my-site/
  :author/bio       "A sentence or two about you."
  :author/photo     "/images/author.jpg"}
 ```
+
+Make sure `:site/base-url` is set correctly, and doesn't not have a trailing `/`.
 
 To use an author photo, place it in `my-site/resources/images/` and set `:author/photo` to the matching path.
 
