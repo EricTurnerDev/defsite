@@ -39,7 +39,7 @@
        "})();"
        "</script>"))
 
-(defn- head-html [config title description]
+(defn- head-html [config title description canonical-url]
   ;; Inject theme-init before </head> so it runs synchronously, preventing
   ;; flash of wrong theme. hiccup 1.x escapes raw strings, so we use
   ;; str/replace on the rendered HTML to splice the script tag in.
@@ -49,6 +49,7 @@
          [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
          [:title (str title " — " (:site/title config))]
          (when description [:meta {:name "description" :content description}])
+         [:link {:rel "canonical" :href canonical-url}]
          [:link {:rel "stylesheet" :href "/css/style.css"}]])
       (str/replace "</head>" (str theme-init-script "</head>"))))
 
@@ -127,10 +128,10 @@
        "})();"
        "</script>"))
 
-(defn- page-html [config title description main-html]
+(defn- page-html [config title description canonical-url main-html]
   (str "<!DOCTYPE html>\n"
        "<html lang=\"en\">"
-       (head-html config title description)
+       (head-html config title description canonical-url)
        "<body>"
        (site-header-html config)
        "<div class=\"site-body\">"
@@ -185,7 +186,9 @@
                            "<div id=\"post-list\" class=\"post-list\">"
                            cards-html
                            "</div>")]
-    (page-html config "Posts" (:site/description config) main-html)))
+    (page-html config "Posts" (:site/description config)
+               (str (:site/base-url config) "/")
+               main-html)))
 
 (defn post-page
   "Individual post page.
@@ -218,7 +221,9 @@
                                 [:span.post-nav-placeholder])]
                              [:a.post-back {:href "/"} "\u2190 Back to all posts"]]])
                          (str/replace sentinel (:body-html post)))]
-    (page-html config (:title post) (:summary post) article-html)))
+    (page-html config (:title post) (:summary post)
+               (str (:site/base-url config) (:url post))
+               article-html)))
 
 (defn category-page
   "Post listing for a single category."
@@ -238,6 +243,7 @@
     (page-html config
                (str "Category: " category)
                (str "Posts tagged \u201C" category "\u201D")
+               (str (:site/base-url config) "/categories/" (category-slug category) "/")
                main-html)))
 
 (defn categories-index-page
@@ -251,4 +257,6 @@
                        [:li.category-item
                         [:a {:href (str "/categories/" (category-slug cat) "/")} cat]
                         [:span.post-count " (" (count cat-posts) ")"]])])]
-    (page-html config "Categories" "All post categories" main-html)))
+    (page-html config "Categories" "All post categories"
+               (str (:site/base-url config) "/categories/")
+               main-html)))
