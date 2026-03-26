@@ -75,6 +75,10 @@
   (fs/write-file output-dir "search-index.json"
                  (-> posts search/build-index search/index->json)))
 
+(defn- write-sitemap! [cfg posts cats-map output-dir]
+  (fs/write-file output-dir "sitemap.xml"
+                 (tmpl/sitemap-xml cfg posts cats-map)))
+
 ;; ---------------------------------------------------------------------------
 ;; Public entry point
 
@@ -125,6 +129,9 @@
 
          (println "Writing search index…")
          (write-search-index! posts output-dir)
+
+         (println "Writing sitemap…")
+         (write-sitemap! cfg posts cats-map output-dir)
 
          (println (str "\nDone! "
                        (count posts) " post(s) written to "

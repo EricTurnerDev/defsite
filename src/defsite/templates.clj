@@ -246,6 +246,27 @@
                (str (:site/base-url config) "/categories/" (category-slug category) "/")
                main-html)))
 
+(defn sitemap-xml
+  "Generate a sitemap.xml string covering all public pages."
+  [config posts categories-map]
+  (let [base     (:site/base-url config)
+        url      (fn [path lastmod]
+                   (str "<url>"
+                        "<loc>" base path "</loc>"
+                        (when lastmod (str "<lastmod>" lastmod "</lastmod>"))
+                        "</url>"))
+        entries  (concat
+                   [(url "/" nil)
+                    (url "/categories/" nil)]
+                   (for [[cat _] categories-map]
+                     (url (str "/categories/" (category-slug cat) "/") nil))
+                   (for [post (sort-by :date #(compare %2 %1) posts)]
+                     (url (:url post) (str (:date post)))))]
+    (str "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+         "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
+         (str/join "\n" entries)
+         "\n</urlset>\n")))
+
 (defn categories-index-page
   "Page listing all categories with post counts."
   [config categories-map]
