@@ -2,7 +2,71 @@
    {org.babashka/http-server {:mvn/version "0.1.11"}}
 
  :tasks
-   {build {:doc "Build the site. Args: [--show-unpublished] [site-dir]"
+   {:init
+    ;; Define a custom static file server that serves 404.html (with HTTP 404
+    ;; status) for any path that has no matching file in the output directory.
+    ;; babashka ships with org.httpkit.server built-in.
+    (do
+      (require '[org.httpkit.server :as httpkit]
+               '[babashka.fs        :as bfs]
+               '[clojure.string     :as cstr])
+      (import  '[java.net URLDecoder])
+
+      (def ^:private static-mime-types
+        {"html"  "text/html; charset=utf-8"
+         "css"   "text/css"
+         "js"    "text/javascript"
+         "json"  "application/json"
+         "xml"   "text/xml"
+         "txt"   "text/plain"
+         "svg"   "image/svg+xml"
+         "png"   "image/png"
+         "jpg"   "image/jpeg"
+         "jpeg"  "image/jpeg"
+         "gif"   "image/gif"
+         "ico"   "image/x-icon"
+         "woff"  "font/woff"
+         "woff2" "font/woff2"
+         "webp"  "image/webp"})
+
+      (defn- static-mime-type [path]
+        (let [ext (second (re-find (re-pattern "\\.([^.]+)$") (str (bfs/file-name path))))]
+          (get static-mime-types ext "application/octet-stream")))
+
+      (defn serve-static!
+        "Start a static file server on port serving public-dir.
+         Missing files are served from 404.html with HTTP status 404.
+         Returns the httpkit stop-fn."
+        [public-dir port]
+        (let [dir (bfs/path public-dir)]
+          (println (str "Serving assets at http://localhost:" port))
+          (httpkit/run-server
+            (fn [{:keys [uri]}]
+              (let [decoded     (URLDecoder/decode uri "UTF-8")
+                    f           (bfs/path dir (cstr/replace-first decoded (re-pattern "^/") ""))
+                    index-f     (bfs/path f "index.html")
+                    not-found-f (bfs/path dir "404.html")]
+                (cond
+                  (and (bfs/directory? f) (bfs/readable? index-f))
+                  {:status  200
+                   :headers {"Content-Type" "text/html; charset=utf-8"}
+                   :body    (bfs/file index-f)}
+
+                  (and (bfs/regular-file? f) (bfs/readable? f))
+                  {:status  200
+                   :headers {"Content-Type" (static-mime-type f)}
+                   :body    (bfs/file f)}
+
+                  (bfs/readable? not-found-f)
+                  {:status  404
+                   :headers {"Content-Type" "text/html; charset=utf-8"}
+                   :body    (bfs/file not-found-f)}
+
+                  :else
+                  {:status 404 :body "Not found"})))
+            {:port port}))))
+
+    build {:doc "Build the site. Args: [--show-unpublished] [site-dir]"
            :task (let [args     *command-line-args*
                        show-unp (some #{"--show-unpublished"} args)
                        pos-args (remove #{"--show-unpublished"} args)
@@ -18,18 +82,16 @@
                    (shell {:inherit true} "bash" "-c" (str "rm -rf " site-dir "/public/*")))}
 
     serve {:doc "Serve static site. Args: [site-dir] [port]"
-           :requires ([babashka.http-server :as server])
            :task (let [args                 *command-line-args*
                        [site-dir port-arg]  (if (and (first args) (not (parse-long (first args))))
                                               [(first args) (second args)]
                                               ["." (first args)])
                        port                 (or (some-> port-arg parse-long) 3000)]
-                   (server/serve {:port port :dir (str site-dir "/public")})
+                   (serve-static! (str site-dir "/public") port)
                    (deref (promise)))}
 
     watch {:doc "Watch for changes, rebuild, and live-reload the browser. Args: [--show-unpublished] [site-dir] [port]"
-           :requires ([babashka.http-server :as server]
-                      [babashka.process     :as process])
+           :requires ([babashka.process :as process])
            :task
            (let [args                *command-line-args*
                  show-unp            (some #{"--show-unpublished"} args)
@@ -80,7 +142,7 @@
                                       [(.getPath file) (.lastModified file)])))]
 
              (rebuild!)
-             (server/serve {:port port :dir public-dir})
+             (serve-static! public-dir port)
              (println (str "\nWatching for changes. Serving on http://localhost:" port))
 
              ;; Poll every 300 ms; rebuild when snapshot changes.

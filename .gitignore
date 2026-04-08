@@ -7,6 +7,10 @@
 # Babashka cache
 /.bb/
 
+# Unpacked dependency artifacts
+/META-INF/
+/babashka/
+
 # Clojure/Java build artifacts
 /target/
 *.class

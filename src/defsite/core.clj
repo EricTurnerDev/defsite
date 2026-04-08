@@ -75,6 +75,10 @@
   (fs/write-file output-dir "search-index.json"
                  (-> posts search/build-index search/index->json)))
 
+(defn- write-404-page! [cfg output-dir]
+  (fs/write-file output-dir "404.html"
+                 (tmpl/not-found-page cfg)))
+
 (defn- write-sitemap! [cfg posts cats-map output-dir]
   (fs/write-file output-dir "sitemap.xml"
                  (tmpl/sitemap-xml cfg posts cats-map)))
@@ -126,6 +130,7 @@
          (write-index-page!     cfg posts all-cats output-dir)
          (write-post-pages!     cfg posts           output-dir)
          (write-category-pages! cfg cats-map        output-dir)
+         (write-404-page!       cfg                 output-dir)
 
          (println "Writing search index…")
          (write-search-index! posts output-dir)

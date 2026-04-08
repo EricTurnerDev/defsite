@@ -267,6 +267,18 @@
          (str/join "\n" entries)
          "\n</urlset>\n")))
 
+(defn not-found-page
+  "Styled 404 page served when a URL has no matching file."
+  [config]
+  (let [main-html (h/html
+                    [:div.not-found
+                     [:h1 "404"]
+                     [:p "Sorry, the page you\u2019re looking for doesn\u2019t exist."]
+                     [:a {:href "/"} "\u2190 Back to all posts"]])]
+    (page-html config "Page Not Found" "The requested page was not found."
+               (str (:site/base-url config) "/404")
+               main-html)))
+
 (defn categories-index-page
   "Page listing all categories with post counts."
   [config categories-map]
