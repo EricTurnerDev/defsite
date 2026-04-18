@@ -1,5 +1,6 @@
 (ns defsite.markdown
   (:require [markdown.core :as md]
+            [defsite.embed :as embed]
             [clojure.string :as str]))
 
 (def ^:private frontmatter-re
@@ -90,6 +91,17 @@
 ;; ---------------------------------------------------------------------------
 ;; Image caption injection
 
+(defn- embed-youtube-videos
+  "Replace <img> tags whose src is a YouTube URL with responsive iframe embeds."
+  [html]
+  (str/replace html
+               #"<img\s[^>]*/?>"
+               (fn [img-tag]
+                 (let [src (second (re-find #"\bsrc=\"([^\"]+)\"" img-tag))]
+                   (if (and src (re-find #"(?:youtube\.com/watch|youtu\.be/)" src))
+                     (embed/youtube-html src)
+                     img-tag)))))
+
 (defn- add-figure-captions
   "Wrap any <img> tag whose title attribute is non-empty in a
    <figure>/<figcaption> pair so authors can add captions with the
@@ -123,5 +135,5 @@
      :published  (true? (:published fm))
      :slug       slug
      :url        (str "/posts/" slug "/")
-     :body-html  (-> body md/md-to-html-string add-figure-captions)
+     :body-html  (-> body md/md-to-html-string embed-youtube-videos add-figure-captions)
      :source     :markdown}))

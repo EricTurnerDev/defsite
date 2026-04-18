@@ -1,5 +1,6 @@
 (ns defsite.hiccup-post
   (:require [hiccup.core :as h]
+            [defsite.embed :as embed]
             [clojure.edn :as edn]
             [clojure.string :as str]))
 
@@ -15,6 +16,15 @@
 
 (defn- parse-date [v]
   (when v (java.time.LocalDate/parse (str v))))
+
+(defn- expand-embeds
+  "Walk a Hiccup tree, replacing [:youtube url-or-id] with an iframe embed."
+  [node]
+  (if (vector? node)
+    (if (= :youtube (first node))
+      (embed/youtube-hiccup (second node))
+      (mapv expand-embeds node))
+    node))
 
 (defn- validate-post!
   "Throw when a required field is absent or :content is not a vector."
@@ -39,7 +49,7 @@
                        (slug-from-filename filename))
         date       (parse-date (:date post))
         categories (mapv str (:categories post))
-        body-html  (h/html (:content post))]
+        body-html  (h/html (expand-embeds (:content post)))]
     {:title      (str (:title post))
      :date       date
      :categories categories
