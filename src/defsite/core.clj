@@ -49,7 +49,7 @@
     (bfs/delete-tree output-dir))
   (bfs/create-dirs output-dir))
 
-(defn- write-post-pages! [cfg posts output-dir]
+(defn- write-post-pages! [cfg posts output-dir watch?]
   (let [sorted (sort-by (juxt :date :slug) posts)
         n      (count sorted)]
     (doseq [[i post] (map-indexed vector sorted)]
@@ -57,27 +57,27 @@
             next-post (when (< i (dec n))     (nth sorted (inc i)))]
         (fs/write-file output-dir
                        (str "posts/" (:slug post) "/index.html")
-                       (tmpl/post-page cfg post prev-post next-post))))))
+                       (tmpl/post-page cfg post prev-post next-post watch?))))))
 
-(defn- write-index-page! [cfg posts all-cats output-dir]
+(defn- write-index-page! [cfg posts all-cats output-dir watch?]
   (fs/write-file output-dir "index.html"
-                 (tmpl/index-page cfg posts all-cats)))
+                 (tmpl/index-page cfg posts all-cats watch?)))
 
-(defn- write-category-pages! [cfg cats-map output-dir]
+(defn- write-category-pages! [cfg cats-map output-dir watch?]
   (fs/write-file output-dir "categories/index.html"
-                 (tmpl/categories-index-page cfg cats-map))
+                 (tmpl/categories-index-page cfg cats-map watch?))
   (doseq [[cat cat-posts] cats-map]
     (fs/write-file output-dir
                    (str "categories/" (tmpl/category-slug cat) "/index.html")
-                   (tmpl/category-page cfg cat cat-posts))))
+                   (tmpl/category-page cfg cat cat-posts watch?))))
 
 (defn- write-search-index! [posts output-dir]
   (fs/write-file output-dir "search-index.json"
                  (-> posts search/build-index search/index->json)))
 
-(defn- write-404-page! [cfg output-dir]
+(defn- write-404-page! [cfg output-dir watch?]
   (fs/write-file output-dir "404.html"
-                 (tmpl/not-found-page cfg)))
+                 (tmpl/not-found-page cfg watch?)))
 
 (defn- write-sitemap! [cfg posts cats-map output-dir]
   (fs/write-file output-dir "sitemap.xml"
@@ -93,7 +93,8 @@
    :content-dir       "content"
    :resources-dir     "resources"
    :output-dir        "public"
-   :show-unpublished  false})
+   :show-unpublished  false
+   :watch             false})
 
 (defn build
   "Run the full site build pipeline.
@@ -103,7 +104,7 @@
   ([]    (build {}))
   ([opts]
    (let [{:keys [ssg-config-path config-path ssg-resources-dir
-                 content-dir resources-dir output-dir show-unpublished]}
+                 content-dir resources-dir output-dir show-unpublished watch]}
          (merge defaults opts)]
 
      (println "Loading config…")
@@ -127,10 +128,10 @@
          (fs/copy-resources resources-dir output-dir)
 
          (println "Rendering pages…")
-         (write-index-page!     cfg posts all-cats output-dir)
-         (write-post-pages!     cfg posts           output-dir)
-         (write-category-pages! cfg cats-map        output-dir)
-         (write-404-page!       cfg                 output-dir)
+         (write-index-page!     cfg posts all-cats output-dir watch)
+         (write-post-pages!     cfg posts           output-dir watch)
+         (write-category-pages! cfg cats-map        output-dir watch)
+         (write-404-page!       cfg                 output-dir watch)
 
          (println "Writing search index…")
          (write-search-index! posts output-dir)
@@ -147,13 +148,15 @@
   ;; `defaults` ("config.edn" / "resources" relative to CWD, i.e. the SSG dir).
   (try
     (let [show-unpublished? (boolean (some #{"--show-unpublished"} args))
-          pos-args          (remove  #{"--show-unpublished"} args)
+          watch?            (boolean (some #{"--watch"} args))
+          pos-args          (remove  #{"--show-unpublished" "--watch"} args)
           d                 (or (first pos-args) ".")]
       (build {:config-path      (str d "/config.edn")
               :content-dir      (str d "/content")
               :resources-dir    (str d "/resources")
               :output-dir       (str d "/public")
-              :show-unpublished show-unpublished?}))
+              :show-unpublished show-unpublished?
+              :watch            watch?}))
     (catch clojure.lang.ExceptionInfo e
       (println "\nError:" (ex-message e))
       (when-let [data (ex-data e)]

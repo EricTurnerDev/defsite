@@ -121,7 +121,7 @@
                                 (let [res (apply process/shell
                                             {:inherit true :continue true}
                                             "clj" "-M:build"
-                                            (cond-> [site-dir] show-unp (conj "--show-unpublished")))]
+                                            (cond-> [site-dir "--watch"] show-unp (conj "--show-unpublished")))]
                                   (if (zero? (:exit res))
                                     (do (swap! version inc)
                                         (write-lr!)

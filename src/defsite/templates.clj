@@ -104,9 +104,6 @@
 ;; This is the only safe way in hiccup 1.x to embed pre-rendered HTML —
 ;; rather than fighting the macro's escaping, we concatenate strings.
 
-;; Polls /livereload.json and reloads when the version changes.
-;; Makes one request on load; if the file is absent (production) it stops
-;; immediately and silently — no repeated requests, no console errors.
 (def ^:private livereload-script
   (str "<script>"
        "(function(){"
@@ -120,15 +117,13 @@
        "setTimeout(poll,500);"
        "})"
        ".catch(function(){"
-       ;; Never seen the file → production, stop polling.
-       ;; Seen it before → watch mode, file is briefly absent during rebuild, retry.
        "if(v!==null){setTimeout(poll,500);}"
        "});}"
        "poll();"
        "})();"
        "</script>"))
 
-(defn- page-html [config title description canonical-url main-html]
+(defn- page-html [config title description canonical-url main-html watch?]
   (str "<!DOCTYPE html>\n"
        "<html lang=\"en\">"
        (head-html config title description canonical-url)
@@ -144,7 +139,7 @@
        (h/html [:script {:src "/js/search.js" :defer true}])
        (h/html [:script {:src "/js/filter.js" :defer true}])
        (h/html [:script {:src "/js/theme.js"  :defer true}])
-       livereload-script
+       (when watch? livereload-script)
        "</body></html>"))
 
 ;; ---------------------------------------------------------------------------
@@ -170,7 +165,7 @@
 
 (defn index-page
   "Main listing page with category filter buttons and post cards."
-  [config posts all-categories]
+  [config posts all-categories watch?]
   (let [sorted (sort-by (juxt :date :slug) #(compare %2 %1) posts)
         controls-html (h/html
                         [:div.index-controls
@@ -188,12 +183,12 @@
                            "</div>")]
     (page-html config "Posts" (:site/description config)
                (str (:site/base-url config) "/")
-               main-html)))
+               main-html watch?)))
 
 (defn post-page
   "Individual post page.
    Uses a sentinel string to inject the markdown body without hiccup escaping it."
-  [config post prev-post next-post]
+  [config post prev-post next-post watch?]
   ;; Hiccup will not escape a plain alphanumeric sentinel, so we can
   ;; safely substitute the raw markdown HTML after rendering.
   (let [sentinel "__POST_BODY__"
@@ -223,11 +218,11 @@
                          (str/replace sentinel (:body-html post)))]
     (page-html config (:title post) (:summary post)
                (str (:site/base-url config) (:url post))
-               article-html)))
+               article-html watch?)))
 
 (defn category-page
   "Post listing for a single category."
-  [config category posts]
+  [config category posts watch?]
   (let [sorted    (sort-by (juxt :date :slug) #(compare %2 %1) posts)
         cards-html (str/join "" (map post-card sorted))
         main-html  (str (h/html
@@ -244,7 +239,7 @@
                (str "Category: " category)
                (str "Posts tagged \u201C" category "\u201D")
                (str (:site/base-url config) "/categories/" (category-slug category) "/")
-               main-html)))
+               main-html watch?)))
 
 (defn sitemap-xml
   "Generate a sitemap.xml string covering all public pages."
@@ -269,7 +264,7 @@
 
 (defn not-found-page
   "Styled 404 page served when a URL has no matching file."
-  [config]
+  [config watch?]
   (let [main-html (h/html
                     [:div.not-found
                      [:h1 "404"]
@@ -277,11 +272,11 @@
                      [:a {:href "/"} "\u2190 Back to all posts"]])]
     (page-html config "Page Not Found" "The requested page was not found."
                (str (:site/base-url config) "/404")
-               main-html)))
+               main-html watch?)))
 
 (defn categories-index-page
   "Page listing all categories with post counts."
-  [config categories-map]
+  [config categories-map watch?]
   (let [main-html (h/html
                     [:div.categories-header [:h1 "Categories"]]
                     [:ul.categories-list
@@ -292,4 +287,4 @@
                         [:span.post-count " (" (count cat-posts) ")"]])])]
     (page-html config "Categories" "All post categories"
                (str (:site/base-url config) "/categories/")
-               main-html)))
+               main-html watch?)))
