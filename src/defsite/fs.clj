@@ -1,6 +1,5 @@
 (ns defsite.fs
-  (:require [babashka.fs :as fs]
-            [clojure.string :as str]))
+  (:require [babashka.fs :as fs]))
 
 (defn write-file
   "Write content to output-dir/rel-path, creating intermediate directories."
@@ -23,16 +22,12 @@
 
 (defn discover-posts
   "Return a sorted seq of java.io.File for all .md and .edn files
-   found directly inside content-dir/posts/."
+   found anywhere under content-dir/posts/ (recursive)."
   [content-dir]
   (let [posts-path (fs/path content-dir "posts")]
     (if (fs/exists? posts-path)
-      (->> (fs/list-dir posts-path)
-           (filter fs/regular-file?)
-           (filter (fn [p]
-                     (let [n (str (fs/file-name p))]
-                       (or (str/ends-with? n ".md")
-                           (str/ends-with? n ".edn")))))
+      (->> (concat (fs/glob posts-path "**.md")
+                   (fs/glob posts-path "**.edn"))
            (sort-by str)
            (map fs/file))
       [])))
