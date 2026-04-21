@@ -522,11 +522,17 @@ kbd {
 }
 
 /* ---- Theme toggle ---------------------------------------- */
+.header-actions {
+  display:     flex;
+  align-items: center;
+  gap:         0.5rem;
+  margin-left: auto;
+}
+
 #theme-toggle {
   display:       flex;
   align-items:   center;
   justify-content: center;
-  margin-left:   auto;
   padding:       0.4rem 0.5rem;
   border:        1px solid var(--color-border);
   border-radius: var(--radius);
@@ -557,6 +563,29 @@ kbd {
   display: none;
 }
 
+/* ---- Nav toggle (hamburger) ------------------------------ */
+#nav-toggle {
+  display:         none;
+  align-items:     center;
+  justify-content: center;
+  padding:         0.4rem 0.5rem;
+  border:          1px solid var(--color-border);
+  border-radius:   var(--radius);
+  background:      var(--color-bg);
+  color:           var(--color-muted);
+  cursor:          pointer;
+  font-family:     var(--font-sans);
+  transition:      border-color 0.15s, color 0.15s;
+}
+#nav-toggle:hover {
+  border-color: var(--color-link);
+  color:        var(--color-link);
+}
+#nav-toggle .nav-icon         { display: block; line-height: 0; }
+#nav-toggle .nav-icon-close   { display: none; }
+.site-header.nav-open #nav-toggle .nav-icon-close { display: block; }
+.site-header.nav-open #nav-toggle .nav-icon-open  { display: none; }
+
 /* ---- Utility --------------------------------------------- */
 .hidden { display: none !important; }
 
@@ -566,7 +595,31 @@ kbd {
 
   .site-header { padding: 0 1rem; }
   .site-body   { padding: 0 1rem; }
-  .site-title  { display: none; }
+
+  #nav-toggle { display: flex; }
+
+  .nav-links {
+    display:        none;
+    position:       absolute;
+    top:            56px;
+    left:           0;
+    right:          0;
+    flex-direction: column;
+    gap:            0;
+    background:     var(--color-bg);
+    border-bottom:  1px solid var(--color-border);
+    padding:        0.5rem 1rem 1rem;
+    z-index:        99;
+    box-shadow:     0 4px 6px -1px rgba(0, 0, 0, 0.07);
+  }
+  .site-header.nav-open .nav-links { display: flex; }
+
+  .nav-links li {
+    padding:       0.65rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .nav-links li:last-child { border-bottom: none; }
+  .nav-links a { font-size: 1rem; color: var(--color-text); }
 }
 
 @media (max-width: 480px) {

@@ -75,7 +75,22 @@
        (nav-link "/about/"       "About"      current-path)
        (nav-link "/"             "Posts"      current-path)
        (nav-link "/categories/"  "Categories" current-path)]
-      [:button#theme-toggle {:type "button" :aria-label "Switch to dark mode"}
+      [:div.header-actions
+       [:button#nav-toggle {:type "button" :aria-label "Open navigation" :aria-expanded "false"}
+        [:span.nav-icon.nav-icon-open {:aria-hidden "true"}
+         [:svg {:xmlns "http://www.w3.org/2000/svg" :width "20" :height "20" :viewBox "0 0 24 24"
+                :fill "none" :stroke "currentColor" :stroke-width "2"
+                :stroke-linecap "round" :stroke-linejoin "round"}
+          [:line {:x1 "3" :y1 "6"  :x2 "21" :y2 "6"}]
+          [:line {:x1 "3" :y1 "12" :x2 "21" :y2 "12"}]
+          [:line {:x1 "3" :y1 "18" :x2 "21" :y2 "18"}]]]
+        [:span.nav-icon.nav-icon-close {:aria-hidden "true"}
+         [:svg {:xmlns "http://www.w3.org/2000/svg" :width "20" :height "20" :viewBox "0 0 24 24"
+                :fill "none" :stroke "currentColor" :stroke-width "2"
+                :stroke-linecap "round" :stroke-linejoin "round"}
+          [:line {:x1 "18" :y1 "6" :x2 "6"  :y2 "18"}]
+          [:line {:x1 "6"  :y1 "6" :x2 "18" :y2 "18"}]]]]
+       [:button#theme-toggle {:type "button" :aria-label "Switch to dark mode"}
        [:span.theme-icon.theme-icon-sun {:aria-hidden "true"}
         [:svg {:xmlns "http://www.w3.org/2000/svg" :width "20" :height "20" :viewBox "0 0 24 24"
                :fill "none" :stroke "currentColor" :stroke-width "2"
@@ -86,7 +101,7 @@
         [:svg {:xmlns "http://www.w3.org/2000/svg" :width "20" :height "20" :viewBox "0 0 24 24"
                :fill "none" :stroke "currentColor" :stroke-width "2"
                :stroke-linecap "round" :stroke-linejoin "round"}
-         [:path {:d "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"}]]]]]]))
+         [:path {:d "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"}]]]]]]]))
 
 (def ^:private search-html
   (h/html
@@ -144,6 +159,7 @@
        (h/html [:script {:src "/js/search.js" :defer true}])
        (h/html [:script {:src "/js/filter.js" :defer true}])
        (h/html [:script {:src "/js/theme.js"  :defer true}])
+       (h/html [:script {:src "/js/nav.js"    :defer true}])
        (when watch? livereload-script)
        "</body></html>"))
 
