@@ -353,6 +353,67 @@ img { max-width: 100%; display: block; }
   margin: 2rem 0;
 }
 
+.post-body table {
+  border-collapse: collapse;
+  min-width: 100%;
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.post-body th,
+.post-body td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.post-body thead th {
+  font-weight: 600;
+  border-bottom-width: 2px;
+  white-space: nowrap;
+}
+
+.post-body tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.post-body tbody td:first-child {
+  white-space: nowrap;
+}
+
+kbd {
+  font-family:       var(--font-mono);
+  font-size:         0.85em;
+  padding:           0.15em 0.4em;
+  background:        var(--color-bg-alt);
+  border:            1px solid var(--color-border);
+  border-bottom-width: 2px;
+  border-radius:     4px;
+  white-space:       nowrap;
+}
+
+.post-body dl {
+  display:               grid;
+  grid-template-columns: max-content 1fr;
+  column-gap:            1.5rem;
+  margin-bottom:         1.25rem;
+}
+
+.post-body dt,
+.post-body dd {
+  padding:       0.5rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.post-body dt { font-weight: 600; }
+.post-body dd { margin: 0; }
+
+.post-body dt:last-of-type,
+.post-body dd:last-child { border-bottom: none; }
+
 .post-body figure {
   margin: 1.5rem 0;
 }
@@ -529,4 +590,49 @@ img { max-width: 100%; display: block; }
 
   .sidebar-search    { padding: 0.75rem; }
   .sidebar-search h4 { display: none; }
+
+  .post-body dl { grid-template-columns: 1fr; }
+
+  .post-body dt {
+    font-size:     0.8rem;
+    padding-top:   0.75rem;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .post-body dd {
+    padding-top:    0;
+    padding-bottom: 0.75rem;
+    border-bottom:  1px solid var(--color-border);
+  }
+
+  .post-body dl > dd:last-child { border-bottom: none; }
+
+  .post-body table { overflow-x: visible; }
+  .post-body thead { display: none; }
+
+  .post-body tbody,
+  .post-body tr     { display: block; }
+
+  .post-body td {
+    display: block;
+    padding: 0;
+    border: none;
+  }
+
+  .post-body td:first-child {
+    padding-top: 0.75rem;
+    font-size:   0.8rem;
+    color:       var(--color-muted);
+    white-space: nowrap;
+  }
+
+  .post-body td:last-child {
+    padding-bottom: 0.75rem;
+    border-bottom:  1px solid var(--color-border);
+  }
+
+  .post-body tbody tr:last-child td:last-child {
+    border-bottom: none;
+  }
 }
