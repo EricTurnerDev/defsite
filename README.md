@@ -99,6 +99,7 @@ Unpublished posts are treated identically to published ones — they appear on t
 my-site/
 ├── config.edn          # Site title, base URL, author name/bio/photo
 ├── content/
+│   ├── about.md        # Optional: About page body (see below)
 │   └── posts/          # Blog posts (.md or .edn)
 └── resources/
     └── images/
@@ -121,6 +122,29 @@ my-site/
 Make sure `:site/base-url` is set correctly, and doesn't not have a trailing `/`.
 
 To use an author photo, place it in `my-site/resources/images/` and set `:author/photo` to the matching path.
+
+## Customizing the About page
+
+The About page always shows the author photo and name from `config.edn`.
+
+For the page body, you have two options:
+
+**Option 1 — Markdown file (recommended for anything more than a sentence)**
+
+Create `my-site/content/about.md` with the body written in standard Markdown:
+
+```markdown
+Hello! I write about software, cooking, and everything in between.
+
+You can find my open-source work on [GitHub](https://github.com/yourname).
+```
+
+No frontmatter is needed. The file is body-only Markdown.
+
+**Option 2 — Single bio string**
+
+If `content/about.md` does not exist, the build falls back to the `:author/bio`
+value in `config.edn` — rendered as a single paragraph.
 
 ## Writing posts
 

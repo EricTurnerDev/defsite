@@ -113,6 +113,11 @@
                  (str "<figure><img" before "title=\"" title "\"" after
                       "><figcaption>" title "</figcaption></figure>"))))
 
+(defn parse-about-page
+  "Read a body-only Markdown file (no frontmatter) and return its HTML string."
+  [^java.io.File file]
+  (-> (slurp file) md/md-to-html-string embed-youtube-videos add-figure-captions))
+
 (defn parse-post
   "Parse a Markdown post file into the unified post map.
    Frontmatter is a YAML subset; the body is converted to HTML by markdown-clj."

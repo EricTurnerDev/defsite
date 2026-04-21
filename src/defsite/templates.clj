@@ -270,16 +270,20 @@
          "\n</urlset>\n")))
 
 (defn about-page
-  "Author bio page at /about/."
-  [config watch?]
-  (let [main-html (h/html
-                    [:div.about-page
-                     [:img.about-photo {:src    (:author/photo config)
-                                        :alt    (:author/name config)
-                                        :width  "120"
-                                        :height "120"}]
-                     [:h1.about-name (:author/name config)]
-                     [:p.about-bio   (:author/bio config)]])]
+  "Author bio page at /about/.
+   about-html is a pre-rendered HTML string from content/about.md, or nil to
+   fall back to the :author/bio string from config."
+  [config about-html watch?]
+  (let [header    (h/html
+                    [:img.about-photo {:src    (:author/photo config)
+                                       :alt    (:author/name config)
+                                       :width  "120"
+                                       :height "120"}]
+                    [:h1.about-name (:author/name config)])
+        body      (if about-html
+                    about-html
+                    (h/html [:p.about-bio (:author/bio config)]))
+        main-html (str "<div class=\"about-page\">" header body "</div>")]
     (page-html config "About" (str "About " (:author/name config))
                (str (:site/base-url config) "/about/") "/about/"
                main-html watch?)))
