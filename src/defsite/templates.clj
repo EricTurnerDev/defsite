@@ -53,14 +53,28 @@
          [:link {:rel "stylesheet" :href "/css/style.css"}]])
       (str/replace "</head>" (str theme-init-script "</head>"))))
 
-(defn- site-header-html [config]
+(defn- nav-link [href label current-path]
+  (let [active? (if (= href "/")
+                  (= current-path "/")
+                  (str/starts-with? current-path href))
+        attrs   (cond-> {:href href}
+                  active? (assoc :class "nav-current"))]
+    [:li [:a attrs label]]))
+
+(defn- site-header-html [config current-path]
   (h/html
     [:header.site-header
      [:nav.site-nav
+      [:a.site-logo-link {:href "/about/"}
+       [:img.site-logo {:src    (:author/photo config)
+                        :alt    (:author/name config)
+                        :width  "32"
+                        :height "32"}]]
       [:a.site-title {:href "/"} (:site/title config)]
       [:ul.nav-links
-       [:li [:a {:href "/"} "Posts"]]
-       [:li [:a {:href "/categories/"} "Categories"]]]
+       (nav-link "/about/"       "About"      current-path)
+       (nav-link "/"             "Posts"      current-path)
+       (nav-link "/categories/"  "Categories" current-path)]
       [:button#theme-toggle {:type "button" :aria-label "Switch to dark mode"}
        [:span.theme-icon.theme-icon-sun {:aria-hidden "true"}
         [:svg {:xmlns "http://www.w3.org/2000/svg" :width "20" :height "20" :viewBox "0 0 24 24"
@@ -74,23 +88,14 @@
                :stroke-linecap "round" :stroke-linejoin "round"}
          [:path {:d "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"}]]]]]]))
 
-(defn- sidebar-html [config]
+(def ^:private search-html
   (h/html
-    [:aside.sidebar
-     [:div.author-card
-      [:img.author-photo {:src    (:author/photo config)
-                          :alt    (:author/name config)
-                          :width  "80"
-                          :height "80"}]
-      [:h3.author-name (:author/name config)]
-      [:p.author-bio   (:author/bio config)]]
-     [:div.sidebar-search
-      [:h4 "Search"]
-      [:input#search-input {:type         "search"
-                            :placeholder  "Search posts\u2026"
-                            :autocomplete "off"
-                            :aria-label   "Search posts"}]
-      [:div#search-results {:role "region" :aria-live "polite"}]]]))
+    [:div.site-search
+     [:input#search-input {:type         "search"
+                           :placeholder  "Search posts\u2026"
+                           :autocomplete "off"
+                           :aria-label   "Search posts"}]
+     [:div#search-results {:role "region" :aria-live "polite"}]]))
 
 (defn- footer-html [config]
   (h/html
@@ -123,17 +128,17 @@
        "})();"
        "</script>"))
 
-(defn- page-html [config title description canonical-url main-html watch?]
+(defn- page-html [config title description canonical-url current-path main-html watch?]
   (str "<!DOCTYPE html>\n"
        "<html lang=\"en\">"
        (head-html config title description canonical-url)
        "<body>"
-       (site-header-html config)
+       (site-header-html config current-path)
        "<div class=\"site-body\">"
+       search-html
        "<main class=\"main-content\">"
        main-html
        "</main>"
-       (sidebar-html config)
        "</div>"
        (footer-html config)
        (h/html [:script {:src "/js/search.js" :defer true}])
@@ -182,7 +187,7 @@
                            cards-html
                            "</div>")]
     (page-html config "Posts" (:site/description config)
-               (str (:site/base-url config) "/")
+               (str (:site/base-url config) "/") "/"
                main-html watch?)))
 
 (defn post-page
@@ -217,7 +222,7 @@
                              [:a.post-back {:href "/"} "\u2190 Back to all posts"]]])
                          (str/replace sentinel (:body-html post)))]
     (page-html config (:title post) (:summary post)
-               (str (:site/base-url config) (:url post))
+               (str (:site/base-url config) (:url post)) (:url post)
                article-html watch?)))
 
 (defn category-page
@@ -239,6 +244,7 @@
                (str "Category: " category)
                (str "Posts tagged \u201C" category "\u201D")
                (str (:site/base-url config) "/categories/" (category-slug category) "/")
+               (str "/categories/" (category-slug category) "/")
                main-html watch?)))
 
 (defn sitemap-xml
@@ -252,6 +258,7 @@
                         "</url>"))
         entries  (concat
                    [(url "/" nil)
+                    (url "/about/" nil)
                     (url "/categories/" nil)]
                    (for [[cat _] categories-map]
                      (url (str "/categories/" (category-slug cat) "/") nil))
@@ -262,6 +269,21 @@
          (str/join "\n" entries)
          "\n</urlset>\n")))
 
+(defn about-page
+  "Author bio page at /about/."
+  [config watch?]
+  (let [main-html (h/html
+                    [:div.about-page
+                     [:img.about-photo {:src    (:author/photo config)
+                                        :alt    (:author/name config)
+                                        :width  "120"
+                                        :height "120"}]
+                     [:h1.about-name (:author/name config)]
+                     [:p.about-bio   (:author/bio config)]])]
+    (page-html config "About" (str "About " (:author/name config))
+               (str (:site/base-url config) "/about/") "/about/"
+               main-html watch?)))
+
 (defn not-found-page
   "Styled 404 page served when a URL has no matching file."
   [config watch?]
@@ -271,7 +293,7 @@
                      [:p "Sorry, the page you\u2019re looking for doesn\u2019t exist."]
                      [:a {:href "/"} "\u2190 Back to all posts"]])]
     (page-html config "Page Not Found" "The requested page was not found."
-               (str (:site/base-url config) "/404")
+               (str (:site/base-url config) "/404") "/404"
                main-html watch?)))
 
 (defn categories-index-page
@@ -286,5 +308,5 @@
                         [:a {:href (str "/categories/" (category-slug cat) "/")} cat]
                         [:span.post-count " (" (count cat-posts) ")"]])])]
     (page-html config "Categories" "All post categories"
-               (str (:site/base-url config) "/categories/")
+               (str (:site/base-url config) "/categories/") "/categories/"
                main-html watch?)))

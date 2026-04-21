@@ -75,6 +75,10 @@
   (fs/write-file output-dir "search-index.json"
                  (-> posts search/build-index search/index->json)))
 
+(defn- write-about-page! [cfg output-dir watch?]
+  (fs/write-file output-dir "about/index.html"
+                 (tmpl/about-page cfg watch?)))
+
 (defn- write-404-page! [cfg output-dir watch?]
   (fs/write-file output-dir "404.html"
                  (tmpl/not-found-page cfg watch?)))
@@ -131,6 +135,7 @@
          (write-index-page!     cfg posts all-cats output-dir watch)
          (write-post-pages!     cfg posts           output-dir watch)
          (write-category-pages! cfg cats-map        output-dir watch)
+         (write-about-page!     cfg                 output-dir watch)
          (write-404-page!       cfg                 output-dir watch)
 
          (println "Writing search index…")
