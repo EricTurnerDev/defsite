@@ -208,7 +208,7 @@
                                 [:span.draft-badge "Draft"])
                               [:span.post-categories
                                (map category-tag (:categories post))]]]
-                            [:div.post-body sentinel]
+                            [:div.content-body sentinel]
                             [:footer.post-footer
                              [:nav.post-nav
                               (if prev-post
@@ -283,7 +283,7 @@
         body      (if about-html
                     about-html
                     (h/html [:p.about-bio (:author/bio config)]))
-        main-html (str "<div class=\"about-page\">" header body "</div>")]
+        main-html (str "<div class=\"about-page\">" header "<div class=\"content-body\">" body "</div>" "</div>")]
     (page-html config "About" (str "About " (:author/name config))
                (str (:site/base-url config) "/about/") "/about/"
                main-html watch?)))
