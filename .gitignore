@@ -21,6 +21,7 @@
 .vscode/
 *.swp
 *~
+.nrepl-port
 
 # JetBrains IDEs — recommended by JetBrains (keep shareable project config,
 # ignore user-specific and generated files)

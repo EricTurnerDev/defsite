@@ -40,16 +40,56 @@
       (= v "false") false
       :else v)))
 
+(defn- leading-space-count [s]
+  (count (take-while #{\space \tab} s)))
+
+(defn- parse-block-scalar
+  "Parse a YAML block scalar (> folded or | literal) from remaining lines.
+   Returns [value remaining-lines].
+   > joins lines with a single space (newlines become spaces).
+   | preserves newlines."
+  [indicator lines]
+  (let [first-content (first (remove str/blank? lines))
+        indent        (if first-content (leading-space-count first-content) 0)]
+    (if (zero? indent)
+      ["" lines]
+      (let [block    (take-while #(or (str/blank? %)
+                                      (>= (leading-space-count %) indent))
+                                 lines)
+            remaining (drop (count block) lines)
+            stripped  (->> block
+                           (map #(if (str/blank? %)
+                                   ""
+                                   (subs % (min indent (count %)))))
+                           (drop-while str/blank?)
+                           reverse
+                           (drop-while str/blank?)
+                           reverse)]
+        [(case indicator
+           ">" (str/join " " (remove str/blank? stripped))
+           "|" (str/join "\n" stripped))
+         remaining]))))
+
 (defn- parse-frontmatter
-  "Parse a YAML frontmatter string into a keyword-keyed map."
+  "Parse a YAML frontmatter string into a keyword-keyed map.
+   Supports single-line values, inline sequences, quoted strings, booleans,
+   and block scalars (> folded and | literal) for multi-line values."
   [text]
-  (into {}
-        (for [line  (str/split-lines text)
-              :let  [colon (str/index-of line ":")]
-              :when (and colon (pos? colon))]
-          (let [k (-> line (subs 0 colon) str/trim keyword)
-                v (parse-value (subs line (inc colon)))]
-            [k v]))))
+  (loop [lines  (str/split-lines text)
+         result {}]
+    (if (empty? lines)
+      result
+      (let [line  (first lines)
+            more  (rest lines)
+            colon (str/index-of line ":")]
+        (if (and colon (pos? colon))
+          (let [k   (-> line (subs 0 colon) str/trim keyword)
+                raw (str/trim (subs line (inc colon)))]
+            (if (contains? #{">" "|"} raw)
+              (let [[v remaining] (parse-block-scalar raw more)]
+                (recur remaining (assoc result k v)))
+              (recur more (assoc result k (parse-value raw)))))
+          (recur more result))))))
 
 ;; ---------------------------------------------------------------------------
 ;; Date parsing
