@@ -1,7 +1,12 @@
 (ns defsite.markdown
-  (:require [markdown.core :as md]
-            [defsite.embed :as embed]
-            [clojure.string :as str]))
+  (:require [defsite.embed :as embed]
+            [clojure.string :as str])
+  (:import [com.vladsch.flexmark.html HtmlRenderer]
+           [com.vladsch.flexmark.parser Parser]
+           [com.vladsch.flexmark.ext.tables TablesExtension]
+           [com.vladsch.flexmark.ext.gfm.strikethrough StrikethroughExtension]
+           [com.vladsch.flexmark.util.data MutableDataSet]
+           [java.util ArrayList]))
 
 (def ^:private frontmatter-re
   "Matches YAML frontmatter delimited by --- on its own line."
@@ -129,6 +134,24 @@
   fm)
 
 ;; ---------------------------------------------------------------------------
+;; Markdown → HTML via flexmark (CommonMark-compliant)
+
+(def ^:private flexmark-options
+  (doto (MutableDataSet.)
+    (.set Parser/EXTENSIONS
+          (doto (ArrayList.)
+            (.add (TablesExtension/create))
+            (.add (StrikethroughExtension/create))))))
+
+(def ^:private flexmark-parser   (-> flexmark-options Parser/builder   .build))
+(def ^:private flexmark-renderer (-> flexmark-options HtmlRenderer/builder .build))
+
+(defn- md->html [text]
+  (->> text
+       (.parse flexmark-parser)
+       (.render flexmark-renderer)))
+
+;; ---------------------------------------------------------------------------
 ;; Image caption injection
 
 (defn- embed-youtube-videos
@@ -156,11 +179,11 @@
 (defn parse-about-page
   "Read a body-only Markdown file (no frontmatter) and return its HTML string."
   [^java.io.File file]
-  (-> (slurp file) md/md-to-html-string embed-youtube-videos add-figure-captions))
+  (-> (slurp file) md->html embed-youtube-videos add-figure-captions))
 
 (defn parse-post
   "Parse a Markdown post file into the unified post map.
-   Frontmatter is a YAML subset; the body is converted to HTML by markdown-clj."
+   Frontmatter is a YAML subset; the body is converted to HTML by flexmark."
   [^java.io.File file]
   (let [filename   (.getName file)
         raw        (slurp file)
@@ -180,5 +203,5 @@
      :published  (true? (:published fm))
      :slug       slug
      :url        (str "/posts/" slug "/")
-     :body-html  (-> body md/md-to-html-string embed-youtube-videos add-figure-captions)
+     :body-html  (-> body md->html embed-youtube-videos add-figure-captions)
      :source     :markdown}))
