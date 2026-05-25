@@ -6,6 +6,16 @@
 
 (def ^:private required-fields [:title :date :categories :summary :content])
 
+(defn- substitute-config
+  "Replace {{namespace/name}} placeholders with values from cfg."
+  [text cfg]
+  (reduce (fn [s [k v]]
+            (str/replace s
+                         (str "{{" (namespace k) "/" (name k) "}}")
+                         (str v)))
+          text
+          cfg))
+
 (defn- slug-from-filename
   "Derive a URL slug from the file name.
    '2024-01-15-my-post.edn' → 'my-post'"
@@ -40,10 +50,12 @@
 
 (defn parse-post
   "Parse an EDN Hiccup post file into the unified post map.
-   The file is read with clojure.edn/read-string — no code is evaluated."
-  [^java.io.File file]
+   The file is read with clojure.edn/read-string — no code is evaluated.
+   cfg is the site config map; {{namespace/name}} placeholders in string
+   values are substituted before EDN parsing."
+  [^java.io.File file cfg]
   (let [filename   (.getName file)
-        post       (-> file slurp edn/read-string)
+        post       (-> file slurp (substitute-config cfg) edn/read-string)
         _          (validate-post! post filename)
         slug       (or (some-> (:slug post) str not-empty)
                        (slug-from-filename filename))

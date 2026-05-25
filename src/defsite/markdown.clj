@@ -97,6 +97,20 @@
           (recur more result))))))
 
 ;; ---------------------------------------------------------------------------
+;; Config template substitution
+
+(defn- substitute-config
+  "Replace {{namespace/name}} placeholders with values from cfg.
+   e.g. {{site/title}} → (:site/title cfg)"
+  [text cfg]
+  (reduce (fn [s [k v]]
+            (str/replace s
+                         (str "{{" (namespace k) "/" (name k) "}}")
+                         (str v)))
+          text
+          cfg))
+
+;; ---------------------------------------------------------------------------
 ;; Date parsing
 
 (defn- parse-date
@@ -177,14 +191,17 @@
                       "><figcaption>" title "</figcaption></figure>"))))
 
 (defn parse-about-page
-  "Read a body-only Markdown file (no frontmatter) and return its HTML string."
-  [^java.io.File file]
-  (-> (slurp file) md->html embed-youtube-videos add-figure-captions))
+  "Read a body-only Markdown file (no frontmatter) and return its HTML string.
+   cfg is the site config map; {{namespace/name}} placeholders are substituted."
+  [^java.io.File file cfg]
+  (-> (slurp file) (substitute-config cfg) md->html embed-youtube-videos add-figure-captions))
 
 (defn parse-post
   "Parse a Markdown post file into the unified post map.
-   Frontmatter is a YAML subset; the body is converted to HTML by flexmark."
-  [^java.io.File file]
+   Frontmatter is a YAML subset; the body is converted to HTML by flexmark.
+   cfg is the site config map; {{namespace/name}} placeholders in the body
+   are replaced with the corresponding config values before rendering."
+  [^java.io.File file cfg]
   (let [filename   (.getName file)
         raw        (slurp file)
         {:keys [frontmatter body]} (split-frontmatter raw filename)
@@ -203,5 +220,5 @@
      :published  (true? (:published fm))
      :slug       slug
      :url        (str "/posts/" slug "/")
-     :body-html  (-> body md->html embed-youtube-videos add-figure-captions)
+     :body-html  (-> body (substitute-config cfg) md->html embed-youtube-videos add-figure-captions)
      :source     :markdown}))

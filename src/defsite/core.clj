@@ -13,16 +13,16 @@
 
 (defn- parse-post
   "Dispatch to the correct parser based on file extension."
-  [^java.io.File file]
+  [^java.io.File file cfg]
   (let [name (.getName file)]
     (cond
-      (str/ends-with? name ".md")  (markdown/parse-post file)
-      (str/ends-with? name ".edn") (hiccup-post/parse-post file)
+      (str/ends-with? name ".md")  (markdown/parse-post file cfg)
+      (str/ends-with? name ".edn") (hiccup-post/parse-post file cfg)
       :else (throw (ex-info (str "Unknown post format: " name) {:file file})))))
 
-(defn- load-posts [content-dir show-unpublished?]
+(defn- load-posts [content-dir show-unpublished? cfg]
   (->> (fs/discover-posts content-dir)
-       (mapv parse-post)
+       (mapv #(parse-post % cfg))
        (filterv #(or show-unpublished? (:published %)))))
 
 ;; ---------------------------------------------------------------------------
@@ -78,7 +78,7 @@
 (defn- write-about-page! [cfg content-dir output-dir watch?]
   (let [about-file (java.io.File. (str content-dir "/about.md"))
         about-html (when (.exists about-file)
-                     (markdown/parse-about-page about-file))]
+                     (markdown/parse-about-page about-file cfg))]
     (fs/write-file output-dir "about/index.html"
                    (tmpl/about-page cfg about-html watch?))))
 
@@ -119,7 +119,7 @@
        (println (str "  Building '" (:site/title cfg) "'"))
 
        (println "Parsing posts…")
-       (let [posts    (load-posts content-dir show-unpublished)
+       (let [posts    (load-posts content-dir show-unpublished cfg)
              cats-map (build-categories-map posts)
              all-cats (set (keys cats-map))]
          (println (str "  " (count posts)    " post(s) across "
